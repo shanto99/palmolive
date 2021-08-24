@@ -1,0 +1,17 @@
+.report-table td {
+    padding: 0.25rem !important;
+    white-space: nowrap;
+}
+
+table th {
+    word-wrap: break-word;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+}
+
+.table-container {
+    height: 75vh;
+}
+
+
