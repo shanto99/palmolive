@@ -24,7 +24,6 @@ class Sidebar extends React.Component {
 
     render() {
         let menus = this.state.menus;
-        console.log(menus);
         return (
                 <aside id="sidebar-left" className="sidebar-left">
                     <div className="sidebar-header">
@@ -35,7 +34,7 @@ class Sidebar extends React.Component {
                             <i className="fas fa-bars" aria-label="Toggle sidebar"/>
                         </div>
                     </div>
-                        <div className="nano">
+                        <div className="">
                             <div className="nano-content">
                                 <nav id="menu" className="nav-main" role="navigation">
                                     <ul className="nav nav-main">
@@ -70,6 +69,13 @@ class Sidebar extends React.Component {
                                                 </Link>
                                           </li>
                                         : null}
+
+                                        <li>
+                                            <Link to="/detail-report">
+                                                <i className="bx bxs-data" aria-hidden="true"/>
+                                                <span>Detail report</span>
+                                            </Link>
+                                        </li>
 
                                     </ul>
                                 </nav>

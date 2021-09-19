@@ -45,11 +45,13 @@ Route::group(['prefix' => 'palmolive'], function()
     Route::get('/get-goal-inputs/{headId}/{subHeadId}/{start}/{end}', [InputController::class, 'getGoalInputValues']);
 
     Route::get('/get-dashboard-report-data/{year}', [ReportController::class, 'getDashboardReport']);
+    Route::get('/get-dashboard-report-data-with-group/{year}', [ReportController::class, 'getDashboardReportWithGrouping']);
     Route::get('/sync-report-data', [ReportController::class, 'syncReport']);
 
     Route::get('/auth-user', [AuthController::class, 'getAuthUser']);
 
 
+    Route::get('/deep-detail/{headId}/{subHeadId}/{year}/{depth}/{region?}', [ReportController::class, 'get_deeper']);
 
 });
 

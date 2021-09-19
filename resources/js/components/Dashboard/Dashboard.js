@@ -1,4 +1,5 @@
 import React from "react";
+import ReactTooltip from 'react-tooltip';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -14,13 +15,15 @@ class Dashboard extends React.Component {
         this.state = {
             selectedYear: new Date(),
             reportingData: [],
-            sync: false
+            sync: false,
+            tooltip: true
         };
 
         this.generateReportRows = this.generateReportRows.bind(this);
         this.selectYear = this.selectYear.bind(this);
         this.getDashboardReportingData = this.getDashboardReportingData.bind(this);
         this.initiateSync = this.initiateSync.bind(this);
+        this.handleExport = this.handleExport.bind(this);
     }
     componentDidMount() {
         this.getDashboardReportingData();
@@ -106,15 +109,18 @@ class Dashboard extends React.Component {
         let statusStyles = {
             red: {
                 backgroundColor: '#dc3545',
-                width: '50px'
+                width: '50px',
+                color: 'white'
             },
             amber: {
                 backgroundColor: '#FFBF00',
-                width: '50px'
+                width: '50px',
+                color: 'white'
             },
             green: {
                 backgroundColor: 'green',
-                width: '50px'
+                width: '50px',
+                color: 'white'
             }
         };
 
@@ -132,6 +138,10 @@ class Dashboard extends React.Component {
         let alignLeft = {
             textAlign: 'left'
         }
+        function getAchievementColStyle(row, isDistribution) {
+            if(isDistribution) return cellStyle;
+            return {...cellStyle, ...statusStyles[row.colorStatus]}
+        }
         let rowHead = "";
         rowElms = rows.map((row, index) => {
             if(row.isHead) rowHead = row.head;
@@ -142,9 +152,20 @@ class Dashboard extends React.Component {
                     <td style={row.isHead ? subheadStyle : alignLeft}>
                         {
                             row.head.includes("SRs worked")
-                            ? (<div>
-                                <div>{row.head}</div>
-                                <span style={{ fontSize: '7px' }}>Working definition means each SR be working at least 20 days in a month and min 10 bills / memos generating for the working day</span>
+                            ? (<div id="tooltip-container">
+                                <div
+                                    data-for="active-sr"
+                                    data-tip="Working definition means each SR be working at least 20 days in a month and min 10 bills / memos generating for the working day"
+                                    data-iscapture="true"
+                                >
+                                    {row.head}
+                                    <i className="fas fa-info-circle"/>
+                                </div>
+                                {/*<span style={{ fontSize: '7px' }}></span>*/}
+                                    {this.state.tooltip
+                                    ? <ReactTooltip id="active-sr" place="right" type="dark" effect="float"/>
+                                    : null}
+
                             </div>)
                             : row.head
                         }
@@ -165,15 +186,15 @@ class Dashboard extends React.Component {
                     <td style={row.isHead ? subheadStyle : cellStyle}>
                         {!isDistribution ? (row.ytd || "") : ""}
                     </td>
-                    <td style={row.isHead ? subheadStyle : cellStyle}>
+                    <td style={row.isHead ? subheadStyle : getAchievementColStyle(row, isDistribution)}>
                         {!isDistribution ? (row.achievement || "") : ""}
                     </td>
                     <td style={row.isHead ? subheadStyle : cellStyle}>
                         {!isDistribution ? (row.gr_vs_ytd || "") : ""}
                     </td>
-                    {!isDistribution
-                    ? <td style={ row.isHead ? subheadStyle : statusStyles[row.colorStatus]}/>
-                    : <td></td>}
+                    {/*{!isDistribution*/}
+                    {/*? <td style={ row.isHead ? subheadStyle : statusStyles[row.colorStatus]}/>*/}
+                    {/*: <td></td>}*/}
                 </tr>
             )
         });
@@ -204,6 +225,19 @@ class Dashboard extends React.Component {
         });
     }
 
+    handleExport(e)
+    {
+        e.preventDefault();
+        this.setState({
+            tooltip: false
+        }, () => {
+            Utility.exportHtmlTableToExcel('dashboard-report-table', 'palmolive_dashboard_report');
+            this.setState({
+                tooltip: true
+            });
+        });
+    }
+
     render() {
         let fullYear = this.state.selectedYear.getFullYear();
         let shortYear = fullYear.toString().substring(2);
@@ -216,7 +250,7 @@ class Dashboard extends React.Component {
             <React.Fragment>
                 <header className="page-header">
                     <h2>Report</h2>
-                    <button class="btn btn-success btn-lg" onClick={this.initiateSync}
+                    <button className="btn btn-success btn-lg" onClick={this.initiateSync}
                             style={{ float: 'right', marginRight: '10px', marginTop: '5px' }}>
                         Sync
                         {
@@ -241,7 +275,7 @@ class Dashboard extends React.Component {
                             />
                         </div>
 
-                        <button className="btn btn-success float-right" onClick={() => Utility.exportHtmlTableToExcel('dashboard-report-table', 'palmolive_dashboard_report')}>Export</button>
+                        <button className="btn btn-success float-right" onClick={this.handleExport}>Export</button>
                     </div>
 
                     <br/>
@@ -267,13 +301,14 @@ class Dashboard extends React.Component {
                                 <th scope="col" style={tableHeadStyle}>YTD'{shortYear}</th>
                                 <th scope="col" style={tableHeadStyle}>% Ach to Goal </th>
                                 <th scope="col" style={tableHeadStyle}>% Gr vs LY YTD </th>
-                                <th scope="col" style={tableHeadStyle}>Green/ Amber /Red</th>
+                                {/*<th scope="col" style={tableHeadStyle}>Green/ Amber /Red</th>*/}
                             </tr>
                             </thead>
                             <tbody>
                             {this.generateReportRows()}
                             </tbody>
                         </table>
+
                     </div>
                 </div>
             </React.Fragment>
