@@ -15,7 +15,8 @@ const styles = theme = ({
         flex: 1,
         flexBasis: '100px',
         padding: '5px 10px',
-        color: 'black'
+        color: 'black',
+        textAlign: 'right'
     },
     reportHead: {
         fontWeight: 'bold',
@@ -23,7 +24,8 @@ const styles = theme = ({
         color: 'black'
     },
     reportHeadTitleCell: {
-        flexBasis: '300px'
+        flexBasis: '300px',
+        textAlign: 'left !important'
     }
 });
 

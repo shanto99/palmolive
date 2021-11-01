@@ -38,9 +38,23 @@ class ReportController extends Controller
         return response()->json("Synced");
     }
 
-    public function get_deeper($headId, $subHeadId, $year, $depth, $region='')
+    public function get_deeper(Request $request)
     {
-        $query = "exec usp_doLoadDashbordDetails '$subHeadId', '$headId', '$year','$depth','$region','','','',''";
+        $headId = $request->headId;
+        $subHeadId = $request->subHeadId;
+        $year = $request->year;
+        $depth = $request->depth;
+        $region = $request->region ?: '';
+        $zone = $request->zone ?: '';
+        $territory = $request->territory ?: '';
+        $distributor = $request->distributor ?: '';
+        $sr = $request->sr?: '';
+
+        if($headId == 3) {
+            $query = "exec usp_doLoadDashbordProduct '$subHeadId', '$headId', '$year'";
+        } else {
+            $query = "exec usp_doLoadDashbordDetails '$subHeadId', '$headId', '$year','$depth','$region','$zone', '$territory','$distributor',''";
+        }
         $result = DB::select(DB::raw($query));
 
         return response()->json([

@@ -22,7 +22,7 @@ class App extends React.Component {
                 {/*<PageHeader title={this.state.pageTitle}/>*/}
                 <div className="inner-wrapper">
                     <Sidebar/>
-                    <section role="main" className="content-body">
+                    <section role="main" className="content-body" style={{paddingTop: '0'}}>
                         <Routes setPageTitle={this.setPageTitle}/>
                     </section>
                 </div>

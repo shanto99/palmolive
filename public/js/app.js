@@ -12743,12 +12743,27 @@ var Reporting = {
       cb();
     });
   },
-  getDeeper: function getDeeper(headId, subHeadId, year, depth, region) {
-    var url = "";
-    if (depth === "Region") url = "/palmolive/deep-detail/".concat(headId, "/").concat(subHeadId, "/").concat(year, "/").concat(depth);else if (depth === "Zone") url = "/palmolive/deep-detail/".concat(headId, "/").concat(subHeadId, "/").concat(year, "/").concat(depth, "/").concat(region);
+  getDeeper: function getDeeper(headId, subHeadId, year, depth, region, zone, territory, distributor, sr) {
+    var url = "/palmolive/deep-detail"; // if(depth === "Region") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}`;
+    // else if(depth === "Zone") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}`;
+    // else if(depth === 'Territory') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}`;
+    // else if(depth === 'Distributor') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}/${territory}`;
+    // else if(depth === 'SR') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}/${territory}/${distributor}`;
+
     return new Promise(function (resolve, reject) {
-      axios.get(url).then(function (res) {
+      axios.post(url, {
+        headId: headId,
+        subHeadId: subHeadId,
+        year: year,
+        depth: depth,
+        region: region,
+        zone: zone,
+        territory: territory,
+        distributor: distributor
+      }).then(function (res) {
         resolve(res.data);
+      })["catch"](function (err) {
+        reject();
       });
     });
   }
@@ -13037,6 +13052,9 @@ var App = /*#__PURE__*/function (_React$Component) {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_Sidebar_Sidebar__WEBPACK_IMPORTED_MODULE_4__.default, {}), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("section", {
             role: "main",
             className: "content-body",
+            style: {
+              paddingTop: '0'
+            },
             children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_router__WEBPACK_IMPORTED_MODULE_5__.default, {
               setPageTitle: this.setPageTitle
             })
@@ -13167,8 +13185,16 @@ var Dashboard = /*#__PURE__*/function (_React$Component) {
       } else {
         return function (value, isVoid) {
           if (!value || isVoid) return "";
-          value = Number.parseFloat(value).toFixed(0);
-          if (value < 1) return "";else return value;
+          var LCs = value.split(',');
+          var lcString = '';
+          LCs.forEach(function (lc, index) {
+            if (index > 0) {
+              lcString += ", ".concat(lc);
+            } else {
+              lcString += lc;
+            }
+          });
+          return lcString;
         };
       }
     }
@@ -13257,7 +13283,8 @@ var Dashboard = /*#__PURE__*/function (_React$Component) {
         textAlign: 'left'
       };
       var cellStyle = {
-        textAlign: 'right'
+        textAlign: 'right',
+        whiteSpace: 'break-spaces'
       };
       var alignLeft = {
         textAlign: 'left'
@@ -13333,13 +13360,13 @@ var Dashboard = /*#__PURE__*/function (_React$Component) {
             children: row.dec || ""
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
             style: row.isHead ? subheadStyle : cellStyle,
-            children: !isDistribution ? row.ytd || "" : ""
+            children: row.ytd || ""
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
-            style: row.isHead ? subheadStyle : getAchievementColStyle(row, isDistribution),
-            children: !isDistribution ? row.achievement || "" : ""
+            style: row.isHead ? subheadStyle : getAchievementColStyle(row),
+            children: row.achievement || ""
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
             style: row.isHead ? subheadStyle : cellStyle,
-            children: !isDistribution ? row.gr_vs_ytd || "" : ""
+            children: row.gr_vs_ytd || ""
           })]
         }, index);
       });
@@ -13610,7 +13637,18 @@ var reportCellStyle = {
   color: 'black'
 };
 var reportTitleCell = {
-  flexBasis: '300px'
+  flexBasis: '150px'
+};
+var categoryCell = {
+  flex: 1,
+  flexBasis: '150px',
+  padding: '5px 10px'
+};
+var valueCell = {
+  textAlign: 'right'
+};
+var titleCell = {
+  backgroundColor: "#ccc"
 };
 
 var DeepReport = /*#__PURE__*/function (_React$Component) {
@@ -13628,17 +13666,24 @@ var DeepReport = /*#__PURE__*/function (_React$Component) {
     var shortYear = _this.props.year.substring(2);
 
     _this.state = {
+      selectedYear: _this.props.year,
       depthTrack: [],
       reportData: [],
       months: ["Jan ".concat(shortYear), "Feb ".concat(shortYear), "Mar ".concat(shortYear), "Apr ".concat(shortYear), "May ".concat(shortYear), "Jun ".concat(shortYear), "Jul ".concat(shortYear), "Aug ".concat(shortYear), "Sep ".concat(shortYear), "Oct ".concat(shortYear), "Nov ".concat(shortYear), "Dec ".concat(shortYear)]
     };
     _this.goDeeper = _this.goDeeper.bind(_assertThisInitialized(_this));
+    _this.getReportData = _this.getReportData.bind(_assertThisInitialized(_this));
     return _this;
   }
 
   _createClass(DeepReport, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      this.getReportData();
+    }
+  }, {
+    key: "getReportData",
+    value: function getReportData() {
       var _this2 = this;
 
       var _this$props = this.props,
@@ -13646,10 +13691,17 @@ var DeepReport = /*#__PURE__*/function (_React$Component) {
           subHeadId = _this$props.subHeadId,
           year = _this$props.year,
           depth = _this$props.depth,
-          region = _this$props.region;
-      _API_Reporting__WEBPACK_IMPORTED_MODULE_1__.default.getDeeper(headId, subHeadId, year, depth, region).then(function (res) {
+          zone = _this$props.zone,
+          region = _this$props.region,
+          territory = _this$props.territory,
+          distributor = _this$props.distributor;
+      _API_Reporting__WEBPACK_IMPORTED_MODULE_1__.default.getDeeper(headId, subHeadId, year, depth, region, zone, territory, distributor).then(function (res) {
         _this2.setState({
           reportData: res.details
+        });
+      })["catch"](function () {
+        _this2.setState({
+          reportData: []
         });
       });
     }
@@ -13664,19 +13716,48 @@ var DeepReport = /*#__PURE__*/function (_React$Component) {
       }
     }
   }, {
+    key: "getDeepTitle",
+    value: function getDeepTitle(depth) {
+      if (this.props.headId === "3") return "Product name";
+      if (depth === "Region") return "Region name";else if (depth === "Zone") return "Zone name";else if (depth === "Territory") return "Territory name";else if (depth === "Distributor") return "Distributor name";else return "SR name";
+    }
+  }, {
+    key: "componentWillReceiveProps",
+    value: function componentWillReceiveProps(nextProps, nextContext) {
+      this.setState({
+        selectedYear: nextProps.year
+      }, this.getReportData);
+    }
+  }, {
     key: "render",
     value: function render() {
       var _this3 = this;
 
-      var classes = this.props.classes;
+      var shortYear = this.state.selectedYear.substring(2);
+      var months = ["Jan ".concat(shortYear), "Feb ".concat(shortYear), "Mar ".concat(shortYear), "Apr ".concat(shortYear), "May ".concat(shortYear), "Jun ".concat(shortYear), "Jul ".concat(shortYear), "Aug ".concat(shortYear), "Sep ".concat(shortYear), "Oct ".concat(shortYear), "Nov ".concat(shortYear), "Dec ".concat(shortYear)];
       if (this.state.reportData.length < 1) return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
         children: "No records found"
       });
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_3__.default, {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_3__.default, {
         style: {
           width: '100%'
         },
-        children: this.state.reportData.map(function (record, index) {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
+          style: {
+            padding: '0 18px',
+            width: '100%',
+            display: 'flex'
+          },
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+            style: _objectSpread(_objectSpread({}, categoryCell), titleCell),
+            children: this.getDeepTitle(this.props.depth)
+          }), months.map(function (month, index) {
+            return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
+              style: _objectSpread(_objectSpread(_objectSpread({}, reportCellStyle), titleCell), valueCell),
+              children: month
+            }, month);
+          })]
+        }), this.state.reportData.map(function (record, index) {
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_4__.default, {
             onChange: function onChange() {
               return _this3.goDeeper(record.Category);
@@ -13685,26 +13766,52 @@ var DeepReport = /*#__PURE__*/function (_React$Component) {
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("div", {
                 style: reportRowStyle,
                 children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
-                  style: _objectSpread(_objectSpread({}, reportTitleCell), reportCellStyle),
-                  children: record.Category
-                }), _this3.state.months.map(function (month, index) {
+                  style: _objectSpread(_objectSpread({}, reportCellStyle), reportTitleCell),
+                  children: _this3.props.headId === "3" ? record.ProductName : record.Category
+                }), months.map(function (month, index) {
                   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("div", {
-                    style: reportCellStyle,
+                    style: _objectSpread(_objectSpread({}, reportCellStyle), valueCell),
                     children: record[month]
                   }, month);
                 })]
               }, record.Category)
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_6__.default, {
+            }), _this3.props.headId === "3" ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_6__.default, {
+              children: "No details found"
+            }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_6__.default, {
               children: _this3.props.depth === "Region" && _this3.state.depthTrack.includes(record.Category) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(DeepReport, {
                 year: _this3.props.year,
                 depth: "Zone",
                 region: record.Category,
                 headId: _this3.props.headId,
                 subHeadId: _this3.props.subHeadId
+              }) : _this3.props.depth === "Zone" && _this3.state.depthTrack.includes(record.Category) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(DeepReport, {
+                year: _this3.props.year,
+                depth: "Territory",
+                region: _this3.props.region,
+                zone: record.Category,
+                headId: _this3.props.headId,
+                subHeadId: _this3.props.subHeadId
+              }) : _this3.props.depth === "Territory" && _this3.state.depthTrack.includes(record.Category) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(DeepReport, {
+                year: _this3.props.year,
+                depth: "Distributor",
+                region: _this3.props.region,
+                zone: _this3.props.zone,
+                territory: record.Category,
+                headId: _this3.props.headId,
+                subHeadId: _this3.props.subHeadId
+              }) : _this3.props.depth === "Distributor" && _this3.state.depthTrack.includes(record.Category) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(DeepReport, {
+                year: _this3.props.year,
+                depth: "SR",
+                region: _this3.props.region,
+                zone: _this3.props.zone,
+                territory: _this3.props.territory,
+                distributor: record.Category,
+                headId: _this3.props.headId,
+                subHeadId: _this3.props.subHeadId
               }) : "No details found"
             })]
           }, index);
-        })
+        })]
       });
     }
   }]);
@@ -13728,15 +13835,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/Accordion/Accordion.js");
-/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/AccordionSummary/AccordionSummary.js");
-/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/AccordionDetails/AccordionDetails.js");
-/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/Grid/Grid.js");
-/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/styles/withStyles.js");
-/* harmony import */ var _DeepReport_DeepReport__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../DeepReport/DeepReport */ "./resources/js/components/DeepReport/DeepReport.js");
-/* harmony import */ var _API_Reporting__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../API/Reporting */ "./resources/js/API/Reporting.js");
-/* harmony import */ var _styles__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./styles */ "./resources/js/components/DetailDashboard/styles.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/Accordion/Accordion.js");
+/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/AccordionSummary/AccordionSummary.js");
+/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/AccordionDetails/AccordionDetails.js");
+/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/Grid/Grid.js");
+/* harmony import */ var _material_ui_core__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @material-ui/core */ "./node_modules/@material-ui/core/esm/styles/withStyles.js");
+/* harmony import */ var react_datepicker__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react-datepicker */ "./node_modules/react-datepicker/dist/react-datepicker.min.js");
+/* harmony import */ var react_datepicker__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react_datepicker__WEBPACK_IMPORTED_MODULE_9__);
+/* harmony import */ var react_datepicker_dist_react_datepicker_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-datepicker/dist/react-datepicker.css */ "./node_modules/react-datepicker/dist/react-datepicker.css");
+/* harmony import */ var _DeepReport_DeepReport__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../DeepReport/DeepReport */ "./resources/js/components/DeepReport/DeepReport.js");
+/* harmony import */ var _API_Reporting__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../API/Reporting */ "./resources/js/API/Reporting.js");
+/* harmony import */ var _styles__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./styles */ "./resources/js/components/DetailDashboard/styles.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
@@ -13779,6 +13889,8 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 
+
+
 var DetailDashboard = /*#__PURE__*/function (_React$Component) {
   _inherits(DetailDashboard, _React$Component);
 
@@ -13792,20 +13904,28 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
     _this = _super.call(this, props);
     _this.state = {
       months: ['January', 'February', 'March', 'April', 'May', 'Jun', 'July', 'August', 'September', 'October', 'November', 'December'],
+      selectedDate: new Date(),
       selectedYear: '2021',
       reportData: null,
       depthTrack: []
     };
     _this.generateReportData = _this.generateReportData.bind(_assertThisInitialized(_this));
+    _this.changeYear = _this.changeYear.bind(_assertThisInitialized(_this));
+    _this.getDetailsReport = _this.getDetailsReport.bind(_assertThisInitialized(_this));
     return _this;
   }
 
   _createClass(DetailDashboard, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      this.getDetailsReport();
+    }
+  }, {
+    key: "getDetailsReport",
+    value: function getDetailsReport() {
       var _this2 = this;
 
-      _API_Reporting__WEBPACK_IMPORTED_MODULE_2__.default.getDashboardReportWithGroup(this.state.selectedYear).then(function (res) {
+      _API_Reporting__WEBPACK_IMPORTED_MODULE_3__.default.getDashboardReportWithGroup(this.state.selectedYear).then(function (res) {
         _this2.setState({
           reportData: res
         });
@@ -13821,6 +13941,33 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
       });
     }
   }, {
+    key: "changeYear",
+    value: function changeYear(date) {
+      var selectedYear = date.getFullYear().toString();
+      this.setState({
+        selectedYear: selectedYear,
+        selectedDate: date
+      }, this.getDetailsReport);
+    }
+  }, {
+    key: "addWhiteSpaceToLc",
+    value: function addWhiteSpaceToLc(headName, value) {
+      if (!value) return "";
+
+      if (headName === "Import L/C number") {
+        var LCs = value.split(',');
+        var lcString = '';
+        LCs.forEach(function (lc, index) {
+          if (index > 0) {
+            lcString += ", ".concat(lc);
+          } else {
+            lcString += lc;
+          }
+        });
+        return lcString;
+      } else return value;
+    }
+  }, {
     key: "generateReportData",
     value: function generateReportData(head) {
       var _this3 = this;
@@ -13828,25 +13975,25 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
       if (!this.state.reportData) return null;
       var classes = this.props.classes;
       return this.state.reportData[head].map(function (subHead) {
-        return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_5__.default, {
+        return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_6__.default, {
           onChange: function onChange() {
             return _this3.goDeeper(subHead.SubHeadID);
           },
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_6__.default, {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_7__.default, {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
               className: classes.reportRow,
-              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                 className: "".concat(classes.reportCell, " ").concat(classes.reportHeadTitleCell),
                 children: subHead.SubHeadName
               }), _this3.state.months.map(function (month, index) {
-                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                   className: "".concat(classes.reportCell),
-                  children: subHead[month]
+                  children: _this3.addWhiteSpaceToLc(subHead.SubHeadName, subHead[month])
                 }, month + index + index);
               })]
             }, subHead.SubHeadName)
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_7__.default, {
-            children: _this3.state.depthTrack.includes(subHead.SubHeadID) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_DeepReport_DeepReport__WEBPACK_IMPORTED_MODULE_1__.default, {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_8__.default, {
+            children: _this3.state.depthTrack.includes(subHead.SubHeadID) ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_DeepReport_DeepReport__WEBPACK_IMPORTED_MODULE_2__.default, {
               headId: subHead.HeadID,
               depth: "Region",
               subHeadId: subHead.SubHeadID,
@@ -13862,41 +14009,54 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
       var _this4 = this;
 
       var classes = this.props.classes;
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
         className: classes.rootContainer,
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+          className: "form-group",
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_9___default()), {
+            dateFormat: "yyyy",
+            className: "form-control",
+            selected: this.state.selectedDate,
+            onChange: this.changeYear,
+            showYearPicker: true
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
           className: classes.reportContainer,
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_8__.default, {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(_material_ui_core__WEBPACK_IMPORTED_MODULE_10__.default, {
             container: true,
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_8__.default, {
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_10__.default, {
               item: true,
               lg: 12,
               sm: 12,
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
                 className: classes.reportRow,
-                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                   className: "".concat(classes.reportCell, " ").concat(classes.reportHead, " ").concat(classes.reportHeadTitleCell),
                   children: "Head"
                 }), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(function (month) {
-                  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+                  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                     className: "".concat(classes.reportCell, " ").concat(classes.reportHead),
                     children: "".concat(month, "'").concat(_this4.state.selectedYear.substring(2))
                   }, month);
                 })]
               })
-            }), this.state.reportData ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_8__.default, {
+            }), this.state.reportData ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_10__.default, {
               item: true,
               lg: 12,
               sm: 12,
+              style: {
+                height: 'calc(100vh - 200px)',
+                overflow: 'auto'
+              },
               children: Object.keys(this.state.reportData).map(function (head) {
-                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("section", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
+                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("section", {
+                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
                     className: classes.reportRow,
-                    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+                    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                       className: "".concat(classes.reportCell, " ").concat(classes.reportHead, " ").concat(classes.reportHeadTitleCell),
                       children: head
                     }), _this4.state.months.map(function (month, index) {
-                      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+                      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
                         className: "".concat(classes.reportCell, " ").concat(classes.reportHead)
                       }, month + index);
                     })]
@@ -13905,7 +14065,7 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
               })
             }) : null]
           })
-        })
+        })]
       });
     }
   }]);
@@ -13913,7 +14073,7 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
   return DetailDashboard;
 }(react__WEBPACK_IMPORTED_MODULE_0__.Component);
 
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,_material_ui_core__WEBPACK_IMPORTED_MODULE_9__.default)(_styles__WEBPACK_IMPORTED_MODULE_3__.default)(DetailDashboard));
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,_material_ui_core__WEBPACK_IMPORTED_MODULE_11__.default)(_styles__WEBPACK_IMPORTED_MODULE_4__.default)(DetailDashboard));
 
 /***/ }),
 
@@ -13945,7 +14105,8 @@ var styles = theme = {
     flex: 1,
     flexBasis: '100px',
     padding: '5px 10px',
-    color: 'black'
+    color: 'black',
+    textAlign: 'right'
   },
   reportHead: {
     fontWeight: 'bold',
@@ -13953,7 +14114,8 @@ var styles = theme = {
     color: 'black'
   },
   reportHeadTitleCell: {
-    flexBasis: '300px'
+    flexBasis: '300px',
+    textAlign: 'left !important'
   }
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (styles);
@@ -14202,11 +14364,12 @@ var HeadInput = /*#__PURE__*/function (_React$Component) {
           selectedSubHead = _this$state.selectedSubHead,
           startPeriod = _this$state.startPeriod,
           endPeriod = _this$state.endPeriod;
+      console.log(selectedSubHead);
       _API_HeadInputManagement__WEBPACK_IMPORTED_MODULE_5__.default.getHeadInputs(selectedHead, selectedSubHead, startPeriod, endPeriod, this.props.isInputTypeGoal, function (values) {
         var previousInputs = {};
         values.forEach(function (preInput) {
           var period = _this6.props.isInputTypeGoal ? preInput.Year : preInput.Period;
-          previousInputs[period] = Number.parseFloat(preInput.Value).toFixed(2);
+          previousInputs[period] = selectedSubHead === '1' ? preInput.Text : Number.parseFloat(preInput.Value).toFixed(2);
         });
 
         var inputs = _toConsumableArray(_this6.inputsContainer.current.querySelectorAll('input'));

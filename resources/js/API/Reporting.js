@@ -20,14 +20,19 @@ const Reporting = {
             cb();
         });
     },
-    getDeeper: function(headId, subHeadId, year, depth, region) {
-        let url = "";
-        if(depth === "Region") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}`;
-        else if(depth === "Zone") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}`;
+    getDeeper: function(headId, subHeadId, year, depth, region, zone, territory, distributor, sr) {
+        let url = "/palmolive/deep-detail";
+        // if(depth === "Region") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}`;
+        // else if(depth === "Zone") url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}`;
+        // else if(depth === 'Territory') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}`;
+        // else if(depth === 'Distributor') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}/${territory}`;
+        // else if(depth === 'SR') url = `/palmolive/deep-detail/${headId}/${subHeadId}/${year}/${depth}/${region}/${zone}/${territory}/${distributor}`;
         return new Promise(function(resolve, reject) {
-           axios.get(url).then(function(res) {
+            axios.post(url, {headId, subHeadId, year, depth, region, zone, territory, distributor}).then(function(res) {
               resolve(res.data);
-           });
+            }).catch(err => {
+                reject();
+            })
         });
     }
 }

@@ -39,9 +39,17 @@ class Dashboard extends React.Component {
         } else {
             return function(value, isVoid) {
                 if(!value || isVoid) return "";
-                value = Number.parseFloat(value).toFixed(0);
-                if (value < 1) return "";
-                else return value;
+                let LCs = value.split(',');
+                let lcString = '';
+                LCs.forEach(function(lc, index) {
+                    if(index > 0) {
+                        lcString += `, ${lc}`;
+                    } else {
+                        lcString += lc;
+                    }
+                });
+
+                return lcString;
              }
         }
 
@@ -132,7 +140,8 @@ class Dashboard extends React.Component {
         };
 
         let cellStyle = {
-            textAlign: 'right'
+            textAlign: 'right',
+            whiteSpace: 'break-spaces'
         };
 
         let alignLeft = {
@@ -184,13 +193,16 @@ class Dashboard extends React.Component {
                     <td style={row.isHead ? subheadStyle : cellStyle}>{row.nov || ""}</td>
                     <td style={row.isHead ? subheadStyle : cellStyle}>{row.dec || ""}</td>
                     <td style={row.isHead ? subheadStyle : cellStyle}>
-                        {!isDistribution ? (row.ytd || "") : ""}
+                        {/*{!isDistribution ? (row.ytd || "") : ""}*/}
+                        {row.ytd || ""}
                     </td>
-                    <td style={row.isHead ? subheadStyle : getAchievementColStyle(row, isDistribution)}>
-                        {!isDistribution ? (row.achievement || "") : ""}
+                    <td style={row.isHead ? subheadStyle : getAchievementColStyle(row)}>
+                        {/*{!isDistribution ? (row.achievement || "") : ""}*/}
+                        {row.achievement || ""}
                     </td>
                     <td style={row.isHead ? subheadStyle : cellStyle}>
-                        {!isDistribution ? (row.gr_vs_ytd || "") : ""}
+                        {/*{!isDistribution ? (row.gr_vs_ytd || "") : ""}*/}
+                        {row.gr_vs_ytd || ""}
                     </td>
                     {/*{!isDistribution*/}
                     {/*? <td style={ row.isHead ? subheadStyle : statusStyles[row.colorStatus]}/>*/}

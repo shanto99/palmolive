@@ -80,22 +80,41 @@ class InputController extends Controller
 
     public function saveInputValues($headId, $subHeadId, $input)
     {
-        $previousRecordQuery = DB::table('InputValue')->where('HeadID', $headId)->where('SubHeadID', $subHeadId)->whereDate('Period', $input['date']);
+        $previousRecordQuery = Input::where('HeadID', $headId)->where('SubHeadID', $subHeadId)->whereDate('Period', $input['date']);
         $previousRecord = $previousRecordQuery->first();
 
         if($previousRecord) {
-            $previousRecordQuery->update([
-                'Value' => $input['value'],
-                'EditedBy' => Auth::user()->UserID
-            ]);
+            if($headId == "1" && $subHeadId == "1") {
+                $previousRecordQuery->update([
+                    'Text' => $input['value'],
+                    'EditedBy' => Auth::user()->UserID
+                ]);
+            } else {
+                $previousRecordQuery->update([
+                    'Value' => $input['value'],
+                    'EditedBy' => Auth::user()->UserID
+                ]);
+            }
+
+
         } else {
-            Input::create([
-                'HeadID' => $headId,
-                'SubHeadID' => $subHeadId,
-                'Period' => $input['date'],
-                'Value' => $input['value'],
-                'EntryBy' => Auth::user()->UserID
-            ]);
+            if($headId == "1" && $subHeadId == "1") {
+                Input::create([
+                    'HeadID' => $headId,
+                    'SubHeadID' => $subHeadId,
+                    'Period' => $input['date'],
+                    'Text' => $input['value'],
+                    'EntryBy' => Auth::user()->UserID
+                ]);
+            } else {
+                Input::create([
+                    'HeadID' => $headId,
+                    'SubHeadID' => $subHeadId,
+                    'Period' => $input['date'],
+                    'Value' => $input['value'],
+                    'EntryBy' => Auth::user()->UserID
+                ]);
+            }
         }
     }
 

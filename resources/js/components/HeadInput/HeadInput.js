@@ -88,11 +88,12 @@ class HeadInput extends React.Component {
 
   getPreviousInputs(){
     let { selectedHead, selectedSubHead, startPeriod, endPeriod } = this.state;
+    console.log(selectedSubHead);
     HeadInputManagement.getHeadInputs(selectedHead, selectedSubHead, startPeriod, endPeriod, this.props.isInputTypeGoal, (values) =>{
         let previousInputs = {};
         values.forEach(preInput => {
             let period = this.props.isInputTypeGoal ? preInput.Year : preInput.Period;
-            previousInputs[period] = Number.parseFloat(preInput.Value).toFixed(2);
+            previousInputs[period] = selectedSubHead === '1' ? preInput.Text : Number.parseFloat(preInput.Value).toFixed(2);
         });
 
         let inputs = [...this.inputsContainer.current.querySelectorAll('input')];
