@@ -2,9 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PrimaryExport;
+use App\Exports\SecondaryExport;
+use App\Jobs\ExportSecondary;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -61,5 +68,52 @@ class ReportController extends Controller
            'details' => $result,
             'status' => 200
         ], 200);
+    }
+
+    public function getPrimaryRawReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $query = "exec usp_doLoadPrimarySalesRawData '$start', '$end'";
+        $result = DB::select($query);
+        $result = json_decode(json_encode($result), true);
+        //return Excel::download(new PrimaryExport($result), 'primary.xlsx');
+        $this->exportexcel($result, 'primary');
+    }
+
+    public function getSecondaryRawReport(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+
+        $query = "SELECT * FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
+                    WHERE InvoiceDate BETWEEN '$start' AND '$end'";
+        $result = DB::select($query);
+        $result = json_decode(json_encode($result), true);
+        $this->exportexcel($result, 'secondary');
+        //$this->exportexcel($result, 'secondary');
+        //return Excel::download(new SecondaryExport($result), 'secondary.xlsx');
+
+        //Excel::store(new SecondaryExport($start, $end),'secondary.xlsx', 'real_public');
+
+        //ExportSecondary::dispatch($start, $end);
+
+    }
+
+    public function exportexcel($result, $filename)
+    {
+        $arrayheading[0] = !empty($result) ? array_keys($result[0]) : [];
+        $result = array_merge($arrayheading, $result);
+
+        header("Content-Disposition: attachment; filename=\"{$filename}.xls\"");
+        header("Content-Type: application/vnd.ms-excel;");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+        $out = fopen("php://output", 'w');
+        foreach ($result as $data) {
+            fputcsv($out, $data, "\t");
+        }
+        fclose($out);
+        exit();
     }
 }

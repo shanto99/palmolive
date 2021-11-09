@@ -76,6 +76,12 @@ class Sidebar extends React.Component {
                                                 <span>Detail report</span>
                                             </Link>
                                         </li>
+                                        <li>
+                                            <Link to="/raw-report">
+                                                <i className="bx bxs-data" aria-hidden="true"/>
+                                                <span>Raw report</span>
+                                            </Link>
+                                        </li>
 
                                     </ul>
                                 </nav>

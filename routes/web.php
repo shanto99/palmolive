@@ -50,10 +50,14 @@ Route::group(['prefix' => 'palmolive'], function()
 
     Route::get('/auth-user', [AuthController::class, 'getAuthUser']);
 
-
     //Route::get('/deep-detail/{headId}/{subHeadId}/{year}/{depth}/{region?}/{zone?}/{territory?}/{distributor?}', [ReportController::class, 'get_deeper']);
     Route::post('/deep-detail', [ReportController::class, 'get_deeper']);
 
+//    Route::get('/get_primary_raw_report/{start_date}/{end_date}', [ReportController::class, 'getPrimaryRawReport']);
+//    Route::get('/get_secondary_raw_report/{start_date}/{end_date}', [ReportController::class, 'getSecondaryRawReport']);
+
+    Route::post('/get_primary_raw_report', [ReportController::class, 'getPrimaryRawReport']);
+    Route::post('/get_secondary_raw_report', [ReportController::class, 'getSecondaryRawReport']);
 });
 
 Route::fallback(function() {

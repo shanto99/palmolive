@@ -34,6 +34,22 @@ const Reporting = {
                 reject();
             })
         });
+    },
+    getPrimaryRawReport: function(startDate, endDate) {
+        let url = `/palmolive/get_primary_raw_report/${startDate}/${endDate}`;
+        return new Promise(function(resolve, reject) {
+            axios.get(url, {responseType: 'arraybuffer'}).then(function(res) {
+                resolve(res.data)
+            });
+        });
+    },
+    getSecondaryRawReport: function(startDate, endDate) {
+        let url = `/palmolive/get_secondary_raw_report/${startDate}/${endDate}`;
+        return new Promise(function(resolve, reject) {
+            axios.get(url, {responseType: 'arraybuffer'}).then(function(res) {
+                resolve(res.data);
+            })
+        });
     }
 }
 
