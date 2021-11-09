@@ -58,6 +58,9 @@ Route::group(['prefix' => 'palmolive'], function()
 
     Route::post('/get_primary_raw_report', [ReportController::class, 'getPrimaryRawReport']);
     Route::post('/get_secondary_raw_report', [ReportController::class, 'getSecondaryRawReport']);
+
+    Route::post('/get_productivity_summary', [ReportController::class, 'getProductivitySummary']);
+
 });
 
 Route::fallback(function() {

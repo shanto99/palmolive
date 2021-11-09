@@ -116,4 +116,22 @@ class ReportController extends Controller
         fclose($out);
         exit();
     }
+
+    public function getProductivitySummary(Request $request)
+    {
+        $type = $request->type;
+
+        $query = "exec sp_ProductivitySummaryReport_N '%','%','%','%','%','Colgate,Palmolive','%','%','Oct 1 2021','Oct 25 2021','Zone','%'";
+
+        if($type === 'Territory') {
+            $query = "sp_ProductivitySummaryReport_N '%','$request->zone','%','%','%','Colgate,Palmolive','%','%','Oct 1 2021','Oct 25 2021','Territory','%'";
+        }
+
+        $result = DB::connection('sqlsrv_second')->select($query);
+
+        return response()->json([
+            'records' => $result,
+            'status' => 200
+        ], 200);
+    }
 }

@@ -11,7 +11,7 @@ const Reporting = {
             axios.get(`/palmolive/get-dashboard-report-data-with-group/${year}`).then(res => {
                 resolve(res.data);
             });
-        })
+        });
 
     },
     syncReportData: function(cb)
@@ -34,6 +34,17 @@ const Reporting = {
                 reject();
             })
         });
+    },
+    productivitySummary: function(type, zone, territory, distributor, sr) {
+        const url = "/palmolive/get_productivity_summary";
+
+        return new Promise(function(resolve, reject) {
+            axios.post(url, { type, zone, territory, distributor, sr }).then(function(res) {
+                resolve(res.data);
+            }).catch(function(err) {
+                reject(err);
+            })
+        })
     },
     getPrimaryRawReport: function(startDate, endDate) {
         let url = `/palmolive/get_primary_raw_report/${startDate}/${endDate}`;
