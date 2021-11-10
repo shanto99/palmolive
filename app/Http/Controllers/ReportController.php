@@ -87,7 +87,7 @@ class ReportController extends Controller
         $end = $request->end_date;
 
         $query = "SELECT * FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
-                    WHERE InvoiceDate BETWEEN '$start' AND '$end'";
+                    WHERE InvoiceDate BETWEEN '$start' AND '$end' AND brand IN ('Colgate','Palmolive')";
         $result = DB::select($query);
         $result = json_decode(json_encode($result), true);
         $this->exportexcel($result, 'secondary');
@@ -120,15 +120,19 @@ class ReportController extends Controller
     public function getProductivitySummary(Request $request)
     {
         $type = $request->type;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
 
-        $query = "exec sp_ProductivitySummaryReport_N '%','%','%','%','%','Colgate,Palmolive','%','%','Oct 1 2021','Oct 25 2021','Zone','%'";
+        $query = "exec sp_ProductivitySummaryReport_N '%','%','%','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Zone','%'";
 
         if($type === 'Territory') {
-            $query = "sp_ProductivitySummaryReport_N '%','$request->zone','%','%','%','Colgate,Palmolive','%','%','Oct 1 2021','Oct 25 2021','Territory','%'";
+            $query = "sp_ProductivitySummaryReport_N '%','$request->zone','%','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Territory','%'";
+        } else if($type === 'Distributor') {
+            $query = "sp_ProductivitySummaryReport_N '%','$request->zone','$request->territory','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Distributor','%'";
+        } else if($type === 'SR') {
+            $query = "sp_ProductivitySummaryReport_N '%','$request->zone','$request->territory','$request->distributor','%','Colgate,Palmolive','%','%','$start_date','$end_date','SR','%'";
         }
-
         $result = DB::connection('sqlsrv_second')->select($query);
-
         return response()->json([
             'records' => $result,
             'status' => 200

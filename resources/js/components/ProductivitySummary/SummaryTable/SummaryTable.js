@@ -1,7 +1,12 @@
 import React from "react";
-import {Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@material-ui/core";
+import {Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, withStyles} from "@material-ui/core";
 
 import nextId from "react-id-generator";
+
+const customTableCellStyle = {
+    padding: '5px !important'
+}
 
 class SummaryTable extends React.Component {
     constructor(props) {
@@ -19,7 +24,7 @@ class SummaryTable extends React.Component {
                 return null;
             } else {
                 return (
-                    <TableCell key={nextId()}>
+                    <TableCell key={nextId()} style={{ color: 'white', fontWeight: 'bold', position: 'relative', padding: '5px' }}>
                         {heading}
                     </TableCell>
                 )
@@ -32,33 +37,37 @@ class SummaryTable extends React.Component {
     }
     render() {
         const rows = this.props.rows;
-        const {level, zone, territory, distributor, sr} = this.props;
+        let {level, zone, territory, distributor, sr} = this.props;
         return (
-            <TableContainer>
                 <Table>
-                    <TableHead>
+                    <TableHead style={{ background: '#eb2f23' }}>
                         <TableRow>
                             {this.createTableHeader()}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {rows.map((record, index) => {
+                            if(!zone) zone = record.AMCode;
+                            if(!territory) territory = record.TerritoryCode;
+                            if(!distributor) distributor = record.DistributorCode;
                             this.details = null;
+                            let detailsBackup  = null;
                             if(record.details) {
                                 this.details = record.details;
+                                detailsBackup = [...record.details];
                                 delete record.details;
                             }
                             const cells = Object.values(record);
-                            return (
-                                <React.Fragment key={nextId()}>
+                            let tableRow = <React.Fragment key={nextId()}>
                                     <TableRow
+                                        style={{ cursor: 'pointer' }}
                                         key={`productivity-${level}-body-row-${index}`}
                                         onClick={() =>
-                                            this.props.expandCb(record.AMCode, this.getNextLevel(), zone, territory, distributor, sr)
+                                            this.props.expandCb(record.TerritoryCode || record.AMCode, this.getNextLevel(), zone, territory, distributor, sr)
                                         }
                                     >
                                         {cells.map(cell => (
-                                            <TableCell key={nextId()}>
+                                            <TableCell key={nextId()} style={{ padding: '5px' }}>
                                                 {cell}
                                             </TableCell>
                                         ))}
@@ -72,17 +81,18 @@ class SummaryTable extends React.Component {
                                                 distributor={this.props.distributor}
                                                 sr={this.props.sr}
                                                 level={this.getNextLevel()}
+                                                expandCb={this.props.expandCb}
                                                 rows={this.details}
                                             />
                                         </TableCell>
                                       </TableRow>
                                     : null}
-                                </React.Fragment>
-                            )
+                                </React.Fragment>;
+                            record.details = detailsBackup;
+                            return tableRow;
                         })}
                     </TableBody>
                 </Table>
-            </TableContainer>
         )
     }
 }

@@ -35,11 +35,11 @@ const Reporting = {
             })
         });
     },
-    productivitySummary: function(type, zone, territory, distributor, sr) {
+    productivitySummary: function(type, zone, territory, distributor, start_date, end_date) {
         const url = "/palmolive/get_productivity_summary";
 
         return new Promise(function(resolve, reject) {
-            axios.post(url, { type, zone, territory, distributor, sr }).then(function(res) {
+            axios.post(url, { type, zone, territory, distributor, start_date, end_date }).then(function(res) {
                 resolve(res.data);
             }).catch(function(err) {
                 reject(err);
