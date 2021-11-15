@@ -30,6 +30,7 @@
         "react-id-generator": "^3.0.2",
         "react-loader-spinner": "^4.0.0",
         "react-router-dom": "^5.2.0",
+        "react-scroll": "^1.8.4",
         "react-tooltip": "^4.2.21",
         "reactjs-popup": "^2.0.4",
         "sweetalert": "^2.1.2"

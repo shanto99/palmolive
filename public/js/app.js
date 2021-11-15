@@ -14270,6 +14270,7 @@ var App = /*#__PURE__*/function (_React$Component) {
     _classCallCheck(this, App);
 
     _this = _super.call(this, props);
+    _this.scrollValue = 0;
     _this.state = {
       pageTitle: "Report"
     };
@@ -15137,7 +15138,7 @@ var DetailDashboard = /*#__PURE__*/function (_React$Component) {
 
     _this = _super.call(this, props);
     _this.state = {
-      months: ['January', 'February', 'March', 'April', 'May', 'Jun', 'July', 'August', 'September', 'October', 'November', 'December'],
+      months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
       selectedDate: new Date(),
       selectedYear: '2021',
       reportData: null,
@@ -16408,6 +16409,11 @@ var ProductivitySummary = /*#__PURE__*/function (_React$Component) {
 
     _this = _super.call(this, props);
 
+    _defineProperty(_assertThisInitialized(_this), "onScroll", function () {
+      if (_this.state.isLoading) return;
+      _this.scrollRef.current = _this.containerRef.current.scrollTop; //this.props.setScroll(scrollValue);
+    });
+
     _defineProperty(_assertThisInitialized(_this), "getRecords", function (type, zone, territory, distributor, sr) {
       var startDate = _Helpers_DateHelpers__WEBPACK_IMPORTED_MODULE_5__.default.humanizedDateFormat(_this.state.startDate);
       var endDate = _Helpers_DateHelpers__WEBPACK_IMPORTED_MODULE_5__.default.humanizedDateFormat(_this.state.endDate);
@@ -16479,9 +16485,16 @@ var ProductivitySummary = /*#__PURE__*/function (_React$Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "getDateForDateRange", function () {
-      _this.getRecords('Zone');
+      _this.setState({
+        isLoading: true
+      }, function () {
+        return _this.getRecords('Zone');
+      });
     });
 
+    _this.containerRef = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createRef();
+    _this.scrollRef = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createRef();
+    _this.scrollRef.current = 0;
     _this.state = {
       startDate: new Date(),
       endDate: new Date(),
@@ -16497,13 +16510,23 @@ var ProductivitySummary = /*#__PURE__*/function (_React$Component) {
       this.getRecords('Zone');
     }
   }, {
+    key: "componentDidUpdate",
+    value: function componentDidUpdate(prevProps, prevState, snapshot) {
+      if (!this.state.isLoading) {
+        this.containerRef.current.scrollTop = this.scrollRef.current;
+      }
+    }
+  }, {
     key: "render",
     value: function render() {
       var records = this.state.records || [];
       var _this$state = this.state,
           startDate = _this$state.startDate,
           endDate = _this$state.endDate;
+      var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
       return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+        ref: this.containerRef,
+        onScroll: this.onScroll,
         style: {
           width: '100%',
           height: '85vh',
@@ -16512,45 +16535,75 @@ var ProductivitySummary = /*#__PURE__*/function (_React$Component) {
         },
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
           style: {
+            width: '100%',
             display: 'flex',
-            alignItems: 'center',
-            marginBottom: '30px'
+            justifyContent: 'space-between'
           },
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
             style: {
-              marginRight: '10px'
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '30px'
             },
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("h5", {
-              children: "Select start date"
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_8___default()), {
-              dateFormat: "yyyy-MM-dd",
-              name: "start_date",
-              className: "form-control",
-              selected: startDate,
-              onChange: this.setStartDate
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+              style: {
+                marginRight: '10px'
+              },
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("h5", {
+                children: "Select start date"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_8___default()), {
+                dateFormat: "yyyy-MM-dd",
+                name: "start_date",
+                className: "form-control",
+                selected: startDate,
+                onChange: this.setStartDate
+              })]
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+              style: {
+                marginRight: '10px'
+              },
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("h5", {
+                children: "Select start date"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_8___default()), {
+                dateFormat: "yyyy-MM-dd",
+                name: "start_date",
+                className: "form-control",
+                selected: endDate,
+                onChange: this.setEndDate
+              })]
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_9__.default, {
+              variant: "outlined",
+              color: "primary",
+              onClick: this.getDateForDateRange,
+              style: {
+                height: '30px',
+                alignSelf: 'end'
+              },
+              children: "Submit"
             })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("form", {
+            method: "post",
+            action: "/palmolive/export_productivity_summary",
             style: {
-              marginRight: '10px'
+              alignSelf: 'center'
             },
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("h5", {
-              children: "Select start date"
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_8___default()), {
-              dateFormat: "yyyy-MM-dd",
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("input", {
+              type: "hidden",
+              name: "_token",
+              value: csrf
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("input", {
+              type: "hidden",
               name: "start_date",
-              className: "form-control",
-              selected: endDate,
-              onChange: this.setEndDate
+              value: _Helpers_DateHelpers__WEBPACK_IMPORTED_MODULE_5__.default.humanizedDateFormat(this.state.startDate)
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("input", {
+              type: "hidden",
+              name: "end_date",
+              value: _Helpers_DateHelpers__WEBPACK_IMPORTED_MODULE_5__.default.humanizedDateFormat(this.state.endDate)
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("input", {
+              type: "submit",
+              name: "export",
+              value: "Export"
             })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_material_ui_core__WEBPACK_IMPORTED_MODULE_9__.default, {
-            variant: "outlined",
-            color: "primary",
-            onClick: this.getDateForDateRange,
-            style: {
-              height: '30px',
-              alignSelf: 'end'
-            },
-            children: "Submit"
           })]
         }), this.state.isLoading ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_PalmoliveLoader_PalmoliveLoader__WEBPACK_IMPORTED_MODULE_4__.default, {}) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(_SummaryTable_SummaryTable__WEBPACK_IMPORTED_MODULE_3__.default, {
           size: "small",

@@ -10,6 +10,7 @@ import Routes from "../router";
 class App extends React.Component {
     constructor(props) {
         super(props);
+        this.scrollValue = 0;
         this.state = {
           pageTitle: "Report"
         };

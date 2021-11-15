@@ -86,7 +86,13 @@ class ReportController extends Controller
         $start = $request->start_date;
         $end = $request->end_date;
 
-        $query = "SELECT * FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
+        $query = "SELECT
+	SMCode,[Sales Manager],[SM Area],ZSMCode,[Zone Name],TerritoryCode,TerritoryName,[ASM Designation],
+	DistributorCode,DistributorName,DistributorType,SRCode,SRName,BeatCode,BeatName,CustomerCode,CustomerName,[Customer Address],
+	Mobile,[Channel Code],Channel,InvoiceNo,InvoiceDay,InvoiceMonth,InvoiceYear,InvoiceDate,ProductCode,
+	ProductName,Category,Brand,Variant,UnitPrice,UnitVAT,[Invoice Qty],ReturnQTY,
+	[Sold Qty],BonusQuantity,TotalQuantity,TP,VAT,Discount,[Other Discount],NET,NSI
+FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
                     WHERE InvoiceDate BETWEEN '$start' AND '$end' AND brand IN ('Colgate','Palmolive')";
         $result = DB::select($query);
         $result = json_decode(json_encode($result), true);
@@ -98,6 +104,17 @@ class ReportController extends Controller
 
         //ExportSecondary::dispatch($start, $end);
 
+    }
+
+    public function export_productivity_summary(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+
+        $query = "exec sp_ProductivitySummaryReport_N '%','%','%','%','%','Colgate,Palmolive','%','%','$start','$end','SR','%'";
+        $result = DB::connection('sqlsrv_second')->select($query);
+        $result = json_decode(json_encode($result), true);
+        $this->exportexcel($result, 'productivity_summary');
     }
 
     public function exportexcel($result, $filename)

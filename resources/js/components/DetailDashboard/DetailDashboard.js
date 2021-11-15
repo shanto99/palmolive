@@ -15,7 +15,7 @@ class DetailDashboard extends React.Component {
         super(props);
 
         this.state = {
-            months: ['January', 'February', 'March', 'April', 'May', 'Jun', 'July', 'August', 'September', 'October', 'November', 'December'],
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
             selectedDate: new Date(),
             selectedYear: '2021',
             reportData: null,
