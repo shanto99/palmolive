@@ -17,14 +17,15 @@ class ReportController extends Controller
 {
     public function getDashboardReport($year)
     {
-        $query = "exec usp_doLoadDashboard '".$year."'";
+        $query = "exec usp_doLoadDashboard '" . $year . "'";
 
         $result = DB::select(DB::raw($query));
         return response()->json($result, 200);
     }
 
-    public function getDashboardReportWithGrouping($year) {
-        $query = "exec usp_doLoadDashboard '".$year."'";
+    public function getDashboardReportWithGrouping($year)
+    {
+        $query = "exec usp_doLoadDashboard '" . $year . "'";
 
         $result = DB::select(DB::raw($query));
         $resultCollection = collect($result);
@@ -34,9 +35,9 @@ class ReportController extends Controller
 
     public function syncReport()
     {
-//        exec SP_SyncColgatePrimarySales '2021-07-01 00:00:00.000', '2021-08-24 00:00:00.000'
-//        exec usp_SyncBoomColgateData
-        $query1 = "exec SP_SyncColgatePrimarySales '". Carbon::now()->format('Y-m-d') ."', '". Carbon::now()->subMonths(1)->firstOfMonth()->format('Y-m-d')."'";
+        //        exec SP_SyncColgatePrimarySales '2021-07-01 00:00:00.000', '2021-08-24 00:00:00.000'
+        //        exec usp_SyncBoomColgateData
+        $query1 = "exec SP_SyncColgatePrimarySales '" . Carbon::now()->format('Y-m-d') . "', '" . Carbon::now()->subMonths(1)->firstOfMonth()->format('Y-m-d') . "'";
         $query2 = "exec usp_SyncBoomColgateData";
 
         DB::statement(DB::raw($query1));
@@ -55,9 +56,9 @@ class ReportController extends Controller
         $zone = $request->zone ?: '';
         $territory = $request->territory ?: '';
         $distributor = $request->distributor ?: '';
-        $sr = $request->sr?: '';
+        $sr = $request->sr ?: '';
 
-        if($headId == 3) {
+        if ($headId == 3) {
             $query = "exec usp_doLoadDashbordProduct '$subHeadId', '$headId', '$year'";
         } else {
             $query = "exec usp_doLoadDashbordDetails '$subHeadId', '$headId', '$year','$depth','$region','$zone', '$territory','$distributor',''";
@@ -65,7 +66,7 @@ class ReportController extends Controller
         $result = DB::select(DB::raw($query));
 
         return response()->json([
-           'details' => $result,
+            'details' => $result,
             'status' => 200
         ], 200);
     }
@@ -87,13 +88,22 @@ class ReportController extends Controller
         $end = $request->end_date;
 
         $query = "SELECT
-	SMCode,[Sales Manager],[SM Area],ZSMCode,[Zone Name],TerritoryCode,TerritoryName,[ASM Designation],
+	SMCode AS RegionCode,[Sales Manager],[SM Area] AS Region,ZSMCode AS ZoneCode,[Zone Name],TerritoryCode,TerritoryName,[ASM Designation],
 	DistributorCode,DistributorName,DistributorType,SRCode,SRName,BeatCode,BeatName,CustomerCode,CustomerName,[Customer Address],
-	Mobile,[Channel Code],Channel,InvoiceNo,InvoiceDay,InvoiceMonth,InvoiceYear,InvoiceDate,ProductCode,
+	Mobile,[Channel Code],Channel AS ChannelType,InvoiceNo,InvoiceDay,InvoiceMonth,InvoiceYear,InvoiceDate,ProductCode,
 	ProductName,Category,Brand,Variant,UnitPrice,UnitVAT,[Invoice Qty],ReturnQTY,
 	[Sold Qty],BonusQuantity,TotalQuantity,TP,VAT,Discount,[Other Discount],NET,NSI
 FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
-                    WHERE InvoiceDate BETWEEN '$start' AND '$end' AND brand IN ('Colgate','Palmolive')";
+WHERE InvoiceDate BETWEEN '$start' AND '$end' AND brand IN ('Colgate','Palmolive')";
+
+        //         $query = "SELECT
+        // 	SMCode,[Sales Manager],[SM Area],ZSMCode,[Zone Name],TerritoryCode,TerritoryName,[ASM Designation],
+        // 	DistributorCode,DistributorName,DistributorType,SRCode,SRName,BeatCode,BeatName,CustomerCode,CustomerName,[Customer Address],
+        // 	Mobile,[Channel Code],Channel,InvoiceNo,InvoiceDay,InvoiceMonth,InvoiceYear,InvoiceDate,ProductCode,
+        // 	ProductName,Category,Brand,Variant,UnitPrice,UnitVAT,[Invoice Qty],ReturnQTY,
+        // 	[Sold Qty],BonusQuantity,TotalQuantity,TP,VAT,Discount,[Other Discount],NET,NSI
+        // FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
+        //                     WHERE InvoiceDate BETWEEN '$start' AND '$end' AND brand IN ('Colgate','Palmolive')";
         $result = DB::select($query);
         $result = json_decode(json_encode($result), true);
         $this->exportexcel($result, 'secondary');
@@ -142,11 +152,11 @@ FROM [192.168.100.70].[BOOMMirror].[dbo].viewSalesData
 
         $query = "exec sp_ProductivitySummaryReport_N '%','%','%','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Zone','%'";
 
-        if($type === 'Territory') {
+        if ($type === 'Territory') {
             $query = "sp_ProductivitySummaryReport_N '%','$request->zone','%','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Territory','%'";
-        } else if($type === 'Distributor') {
+        } else if ($type === 'Distributor') {
             $query = "sp_ProductivitySummaryReport_N '%','$request->zone','$request->territory','%','%','Colgate,Palmolive','%','%','$start_date','$end_date','Distributor','%'";
-        } else if($type === 'SR') {
+        } else if ($type === 'SR') {
             $query = "sp_ProductivitySummaryReport_N '%','$request->zone','$request->territory','$request->distributor','%','Colgate,Palmolive','%','%','$start_date','$end_date','SR','%'";
         }
         $result = DB::connection('sqlsrv_second')->select($query);
